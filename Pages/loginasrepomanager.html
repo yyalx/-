@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="icon" href="imgs/titleIcon.png">
+    <style>
+        form{
+            width: 250px;
+            margin: 100px auto;
+        }
+        input{
+            margin-bottom: 20px;
+            width: 150px;
+        }
+        button{
+            width: 100px;
+            height: 40px;
+            border: none;
+            border-radius: 5px;
+            background-color: #09f;
+            cursor: pointer;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+<form action="LoginServlet" method="post">
+    账号：<input type="text" title="登录名" name="account">
+    <br>
+    密码：<input type="password" title="密码" name="pwd">
+    <input value="repo" style="display: none;" name="identity">
+    <button id="btn">登陆</button>
+</form>
+<script>
+
+</script>
+
+</body>
+</html>

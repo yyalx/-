@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>班长的主页</title>
+    <link rel="icon" href="imgs/titleIcon.png">
+    <style>
+        body,html{
+            width: 1366px;
+            margin: 0;
+        }
+        #foodsTitle{
+            width: 100px;
+            margin: auto;
+            padding-top: 50px;
+        }
+        span{
+            display: inline-block;
+            text-align: center;
+            border-left: 1px solid #ccc;
+        }
+        ul,li{
+            margin: 0;
+            padding: 0;
+            list-style-type: none;
+        }
+        hr{
+            margin: 50px auto 0;
+            width: 80%;
+        }
+        .name{
+            width: 10%;
+        }
+        .material{
+            width: 78%;
+        }
+        .sold{
+            width: 10%;
+        }
+        #order,#reorder{
+            margin-top: 50px;
+            width: 49%;
+            display: inline-block;
+        }
+        #order p,#reorder p{
+            width: 70px;
+            margin: auto;
+        }
+        .aaa{
+            width: 80%;
+            text-align: center;
+        }
+        .bbb{
+            width: 10%;
+        }
+        .ccc{
+            padding-left: 500px;
+            margin-top: 50px;
+            border-top: 1px dotted #ccc;
+        }
+        #submit{
+            margin: 20px auto;
+            cursor: pointer;
+        }
+        .table{
+            width: 80%;
+            margin: auto;
+            border: 1px solid #999;
+        }
+
+    </style>
+    <script src="jquery.js"></script>
+</head>
+<body>
+<p style="float: right;margin-right: 100px;">欢迎： <span id="name" style="padding-left: 10px;">梅花班</span></p>
+<p id="foodsTitle">本班菜谱</p>
+<p id="foods">
+    <span class="name">菜名</span><span class="material">原料</span><span class="sold">销量</span>
+</p>
+<ul id="menu_materials">
+    <!--<li>-->
+        <!--<span class="name">菜名1</span><span class="material">原料</span><span class="sold">销量</span>-->
+    <!--</li>-->
+    <!--<li>-->
+        <!--<span class="name">菜名2</span><span class="material">原料</span><span class="sold">销量</span>-->
+    <!--</li>-->
+    <!--<li>-->
+        <!--<span class="name">菜名3</span><span class="material">原料</span><span class="sold">销量</span>-->
+    <!--</li>-->
+
+</ul>
+
+<hr />
+<div class="table">
+
+
+    <form action="MonitorFormServlet" method="post">
+        <div id="order">
+            <p style="margin-bottom: 10px;">创建订单</p>
+            <ul id="left">
+
+            </ul>
+        </div>
+        <div id="reorder">
+            <p style="margin-bottom: 10px;">补交订单</p>
+            <ul id="right">
+
+            </ul>
+
+        </div>
+        <div class="ccc">
+            <button id="submit" type="submit">提交</button>
+        </div>
+    </form>
+
+
+</div>
+
+<script>
+
+    let m = [];
+    $(function(){
+
+        //请求参数
+        let list = {section:"menu"};
+        //
+        $.ajax({
+            //请求方式
+            type : "POST",
+            //请求的媒体类型
+            contentType: "application/json;charset=UTF-8",
+            //请求地址
+            url : "InitMonitor",
+            //数据，json字符串
+            data : JSON.stringify(list),
+            //请求成功
+            success : function(result) {
+                InitMenu($.parseJSON(result),m);
+                InitList(m);
+            },
+            //请求失败，包含具体的错误信息
+            error : function(e){
+                console.log(e.status);
+                console.log(e.responseText);
+            }
+        });
+    });
+    function InitMenu(result,m) {
+        for (let i = 0; i < result.length; i++) {
+            menuitem = result[i];
+            $("#menu_materials").append(`<li>
+                <span class="name">${menuitem["name"]}</span><span class="material">${menuitem["material"]}</span><span class="sold">${menuitem["soldamount"]}</span>
+                </li>`);
+            let mlist = result[i].material.split("/");
+            console.log(mlist);
+            for (let j=0;j<mlist.length;j++){
+                if (m.indexOf(mlist[j])===-1) {  //如果不存在该材料
+                    m.push(mlist[j]);
+                }
+            }
+        }
+    }
+
+    function InitList(m){
+        for (let i = 0; i < m.length; i++) {
+            $("#left").append(`<li>
+            <span class="aaa">
+                ${m[i]}
+            </span>
+                <input name="${m[i]}1" type="text" title="数量" class="bbb" value="0"></input>
+            </li>`);
+            $("#right").append(`<li>
+            <span class="aaa">
+                ${m[i]}
+            </span>
+                <input name="${m[i]}2" type="text" title="数量" class="bbb" value="0"></input>
+            </li>`);
+        }
+    }
+</script>
+</body>
+</html>

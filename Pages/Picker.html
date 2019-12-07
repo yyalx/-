@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>采购员Page</title>
+    <link rel="icon" href="imgs/titleIcon.png">
+    <style>
+        body,html{
+            width: 1316px;
+            margin: 0;
+        }
+
+
+        body{
+            padding-left: 50px;
+        }
+        #total li{
+            margin: 10px 0;
+        }
+        #total ul li span{
+            width: 300px;
+            display: inline-block;
+            border-left: 1px solid #ccc;
+        }
+        button{
+            cursor: pointer;
+        }
+        #chart{
+            width: 1000px;
+            height: 350px;
+            /*margin: 50px auto;*/
+            position: fixed;
+            margin: auto;
+            top:100px;
+        }
+        .chose{
+            cursor: pointer;
+        }
+        .chose:hover{
+            background-color: rgba(255,125,0,0.5);
+        }
+        .red{
+            background-color: rgba(255,0,0,0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="total">
+        <p>汇总订单</p>
+        <ul id="orders">
+            <li>
+                <span>材料名称</span>
+                <span>需求该材料的班组</span>
+                <span>数量</span>
+                <span>动作</span>
+            </li>
+
+        </ul>
+    </div>
+
+
+    <div id="chart"></div>
+
+
+<script src="jquery.js"></script>
+<script src="echarts.min.js"></script>
+<script type="text/javascript">
+
+    //初始化图表
+    let chartbox = document.getElementById("chart"),
+        myChart = echarts.init(chartbox);
+    let option = {
+        title: {
+            text: "历史采购记录",
+            left:'center',
+            // padding:[5,5,50,5],
+            // top:'50px'
+        },
+
+        tooltip: {},
+        //曲线标注
+        legend: {
+            data: [{
+                name:"none"
+            }],
+            top:'30px'
+        },
+        //x轴
+        xAxis: {
+            data:[1,2,3,4,5,6],
+            name:'时间'
+        },
+        //y轴
+        yAxis: {
+            name:'采购量'
+        },
+        //数据
+        series: [
+            {
+                name:'none',
+                type:'line',
+                data:[0,0,0,0,0,0],
+                smooth:true
+            }
+        ],
+    };
+    myChart.setOption(option);
+
+    //初始化表格及绑定点击事件函数，在ajax中调用
+    //data格式：[{name:---,className:---,historyx:----,historyy:----}]
+    function init(result) {  //初始化订单列表
+
+        let neworders = result['neworder'];
+        let histories = result['histories'];
+
+        for(let i=0;i<neworders.length;i++){
+
+            let order = neworders[i];
+            let history = findHistory(histories,order['name']);
+
+            let abnormal = "";
+            if(Math.abs((history.historyy[5]-order.amount)/history.historyy[5])>0.4){
+                //如果与最后一次正常采购记录相对误差大于40%
+                abnormal = "red";
+            }else{
+                abnormal = "";
+            }
+
+            $("#orders").append(`<li id="order${i}" class="chose ${abnormal}">
+                <span>${order.name}</span>
+                <span>${order.className}</span>
+                <span>${order.amount}</span>
+                <button type="button" id="action${i}">退回</button>
+                <button type="button" id="pass${i}">确认购买</button>
+                </li>`);
+
+            $("#action"+i).on("click",function () {  //退回
+                refuseNewOrder(order.name,order.className);
+                $("#order"+i).remove();
+            });
+
+            let newoption = {
+                legend: {
+                    data: [{
+                        name: history.name+"-"+history.className
+                    }]
+                },
+                series: [
+                    {
+                        name:history.name+"-"+history.className,
+                        data:history.historyy,
+                    }
+                ]
+            };
+
+            $("#order"+i).on("click",function () {   //显示历史
+                drawchart(myChart,newoption);
+            });
+
+
+            $("#pass"+i).on("click",function () {
+                pass(order.name,order.className,order.amount);
+                $("#order"+i).remove();
+            })
+
+        }
+    }
+    //子函数
+    function drawchart(chart,op) {   //画出echart
+
+        chart.setOption(op);
+    }
+
+    $(function(){
+
+        $.ajax({
+            //请求方式
+            type : "POST",
+            //请求的媒体类型
+            contentType: "application/json;charset=UTF-8",
+            //请求地址
+            url : "InitPicker",
+            //数据，json字符串
+            data : 0,
+            //请求成功
+            success : function(result) {
+                console.log($.parseJSON(result));
+                init($.parseJSON(result));
+            },
+            //请求失败，包含具体的错误信息
+            error : function(e){
+                console.log(e.status);
+                console.log(e.responseText);
+            }
+        });
+    });
+
+
+    function findHistory(history,name) {
+        for(let i=0;i<history.length;i++){
+            if (history[i].name === name) {
+                return history[i];
+            }
+        }
+        return {
+            name:'none',
+            className:'none',
+            historyx:[1,2,3,4,5,6],
+            historyy:[0,0,0,0,0,0]
+        }
+    }
+
+
+    function refuseNewOrder(name, className) {
+        $.ajax({
+            //请求方式
+            type : "POST",
+            //请求的媒体类型
+            contentType: "application/json;charset=UTF-8",
+            //请求地址
+            url : "RefuseNewOrder",
+
+            //数据，json字符串
+            data : "{\"name\":\""+name+"\",\"className\":\""+className+"\"}",
+            //请求成功
+            success : function(result) {
+                alert(result);
+            },
+            //请求失败，包含具体的错误信息
+            error : function(e){
+                console.log(e.status);
+                console.log(e.responseText);
+            }
+        });
+    }
+    function pass(name, className,amount) {
+        $.ajax({
+            //请求方式
+            type : "POST",
+            //请求的媒体类型
+            contentType: "application/json;charset=UTF-8",
+            //请求地址
+            url : "PassNewOrder",
+
+            //数据，json字符串
+            data : "{\"name\":\""+name+"\",\"className\":\""+className+"\",\"amount\":\""+amount+"\"}",
+            //请求成功
+            success : function(result) {
+                alert(result);
+            },
+            //请求失败，包含具体的错误信息
+            error : function(e){
+                console.log(e.status);
+                console.log(e.responseText);
+            }
+        });
+    }
+</script>
+</body>
+</html>
